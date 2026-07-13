@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Copy, ChevronUp, GripVertical, X, Plus } from 'lucide-react';
-import { 
-  SingleChoice, MultipleChoice, DropdownChoice, 
-  TextAnswer, NumberInput, DateInput, RatingInput, DividerView 
+import { ChevronUp, GripVertical } from 'lucide-react';
+import {
+  SingleChoice, MultipleChoice, DropdownChoice,
+  TextAnswer, NumberInput, DateInput, RatingInput, DividerView,
 } from './QuestionTypes';
+import QuestionOptionEditor from './QuestionOptionEditor';
+import QuestionActionBar from './QuestionActionBar';
 
 export interface Question {
   id: string;
@@ -95,14 +97,6 @@ export function QuestionEditor({ question, onClose, onDelete, onDuplicate, onUpd
     });
   }, [title, required, options]);
 
-  const handleDeleteOption = (idxToRemove: number) => {
-    setOptions(options.filter((_, idx) => idx !== idxToRemove));
-  };
-
-  const handleAddOption = () => {
-    setOptions([...options, `選択肢${options.length + 1}`]);
-  };
-
   return (
     <div className="border-2 border-blue-500 bg-slate-50/50 rounded-lg shadow-md p-5 transition-all space-y-4">
       {/* 上部ヘッダー */}
@@ -134,93 +128,17 @@ export function QuestionEditor({ question, onClose, onDelete, onDuplicate, onUpd
       </div>
 
       {/* 選択肢の設定 */}
-      {isChoiceType && (
-        <div className="space-y-2 bg-white p-3 rounded-md border border-slate-200">
-          <label className="text-xs font-bold text-slate-600 block mb-1">選択肢の設定</label>
-          <div className="space-y-2">
-            {options.map((opt, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 w-4 text-center">{idx + 1}.</span>
-                <input
-                  type="text"
-                  value={opt}
-                  onChange={(e) => {
-                    const newOpts = [...options];
-                    newOpts[idx] = e.target.value;
-                    setOptions(newOpts);
-                  }}
-                  className="flex-1 text-xs border border-slate-200 rounded p-1.5 focus:border-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleDeleteOption(idx)}
-                  className="text-slate-400 hover:text-red-500 p-1 rounded hover:bg-slate-100 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={handleAddOption}
-            className="mt-2 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-semibold pt-1"
-          >
-            <Plus size={14} />
-            <span>選択肢を追加</span>
-          </button>
-        </div>
-      )}
+      {isChoiceType && <QuestionOptionEditor options={options} onChange={setOptions} />}
 
       {/* 下部コントローラー */}
-      <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-slate-500 text-xs">
-        <div className="flex items-center gap-4">
-          {question.type !== '説明・区切り' && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-600">回答必須</span>
-              <button
-                type="button"
-                onClick={() => setRequired(!required)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  required ? 'bg-blue-600' : 'bg-slate-200'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    required ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* 🆕 複製ボタンのクリックイベントを設定 */}
-          <button 
-            type="button"
-            onClick={onDuplicate}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors"
-          >
-            <Copy size={14} />
-            <span>複製</span>
-          </button>
-          <button 
-            type="button"
-            onClick={onDelete}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-          >
-            <Trash2 size={14} />
-            <span>削除</span>
-          </button>
-          <button 
-            onClick={onClose}
-            className="ml-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm text-xs transition-colors"
-          >
-            保存して閉じる
-          </button>
-        </div>
-      </div>
+      <QuestionActionBar
+        showRequiredToggle={question.type !== '説明・区切り'}
+        required={required}
+        onToggleRequired={() => setRequired(!required)}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        onClose={onClose}
+      />
     </div>
   );
 }
