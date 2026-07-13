@@ -10,6 +10,7 @@ export default function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [openQuestionId, setOpenQuestionId] = useState<string | null>(null);
 
+  // 新しい設問を追加する
   const handleAddQuestion = (typeId: QuestionTypeId) => {
     const labels: Record<QuestionTypeId, string> = {
       single: '単一選択',
@@ -26,7 +27,6 @@ export default function App() {
     const newId = `q-${Date.now()}`;
     const typeLabel = labels[typeId];
 
-    // 選択肢タイプ用のデフォルトオプション
     const defaultOptions = ['単一選択', '複数選択', 'プルダウン'].includes(typeLabel)
       ? ['選択肢1', '選択肢2', '選択肢3']
       : undefined;
@@ -44,6 +44,25 @@ export default function App() {
 
     setQuestions([...questions, newQuestion]);
     setOpenQuestionId(newId);
+  };
+
+  // 設問を削除する関数（番号の再振り分けも含む）
+  const handleDeleteQuestion = (id: string) => {
+    const filtered = questions.filter(q => q.id !== id);
+    // 削除後にQ1, Q2... と番号を綺麗に詰め直す
+    const renumbered = filtered.map((q, index) => ({
+      ...q,
+      number: `Q${index + 1}`
+    }));
+    setQuestions(renumbered);
+    if (openQuestionId === id) {
+      setOpenQuestionId(null);
+    }
+  };
+
+  // 設問の内容（タイトル・必須・選択肢）を更新する関数
+  const handleUpdateQuestion = (updatedQuestion: Question) => {
+    setQuestions(questions.map(q => q.id === updatedQuestion.id ? updatedQuestion : q));
   };
 
   return (
@@ -72,6 +91,8 @@ export default function App() {
                     key={q.id} 
                     question={q} 
                     onClose={() => setOpenQuestionId(null)} 
+                    onDelete={() => handleDeleteQuestion(q.id)}
+                    onUpdate={handleUpdateQuestion}
                   />
                 );
               }
