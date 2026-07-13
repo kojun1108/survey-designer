@@ -7,7 +7,6 @@ import { QuestionCard, QuestionEditor } from './components/QuestionItems';
 import type { Question } from './components/QuestionItems';
 
 export default function App() {
-  // 確実に入力状態を空（0）で初期化
   const [questions, setQuestions] = useState<Question[]>([]);
   const [openQuestionId, setOpenQuestionId] = useState<string | null>(null);
 
@@ -25,13 +24,22 @@ export default function App() {
 
     const nextNumber = questions.length + 1;
     const newId = `q-${Date.now()}`;
+    const typeLabel = labels[typeId];
+
+    // 選択肢タイプ用のデフォルトオプション
+    const defaultOptions = ['単一選択', '複数選択', 'プルダウン'].includes(typeLabel)
+      ? ['選択肢1', '選択肢2', '選択肢3']
+      : undefined;
 
     const newQuestion: Question = {
       id: newId,
       number: `Q${nextNumber}`,
-      title: `新しい${labels[typeId]}の設問タイトルを入力してください。`,
-      type: labels[typeId],
+      title: typeLabel === '説明・区切り' 
+        ? 'ここへ案内文や説明テキストを入力してください。'
+        : `新しい${typeLabel}の設問タイトルを入力してください。`,
+      type: typeLabel,
       required: false,
+      options: defaultOptions
     };
 
     setQuestions([...questions, newQuestion]);
