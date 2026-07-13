@@ -2,7 +2,8 @@ import { useState } from 'react';
 import Header from './components/Header';
 import Stepper from './components/Stepper';
 import Sidebar from './components/Sidebar';
-import { QuestionCard, QuestionEditor, Question } from './components/QuestionItems';
+import { QuestionCard, QuestionEditor } from './components/QuestionItems';
+import type { Question } from './components/QuestionItems'; // 👈 型であることを明示
 
 export default function App() {
   const [openQuestionId, setOpenQuestionId] = useState<string | null>('q2');
