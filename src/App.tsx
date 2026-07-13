@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import Stepper from './components/Stepper'; // 既存のStepperをインポート
 import type { QuestionTypeId } from './components/Sidebar';
 import { QuestionCard, QuestionEditor } from './components/QuestionItems';
 import type { Question } from './components/QuestionItems';
@@ -23,6 +24,13 @@ export default function App() {
 
   // プレビュー画面での回答データを保持
   const [answers, setAnswers] = useState<Record<string, any>>({});
+
+  // 🆕 currentMode に応じたステップ番号を割り出し（Stepperに渡す用）
+  const getStepNumber = (): number => {
+    if (currentMode === 'preview') return 2;
+    if (currentMode === 'publish') return 3;
+    return 1; // 'edit'
+  };
 
   const handleAddQuestion = (typeId: QuestionTypeId) => {
     const labels: Record<QuestionTypeId, string> = {
@@ -120,7 +128,7 @@ export default function App() {
           <h1 className="text-xl font-bold text-slate-900">アンケート詳細設計画面</h1>
         </div>
         
-        {/* 🆕 右上にプレビューボタンを配置 */}
+        {/* 右上にプレビューボタンを配置 */}
         {currentMode === 'edit' && (
           <button 
             onClick={() => {
@@ -138,30 +146,9 @@ export default function App() {
       <div className="max-w-6xl mx-auto bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <Header />
         
-        {/* 🆕 ステップバー (タブではなく、単なる進捗表示として button から div に変更) */}
-        <div className="flex border-b border-slate-200 bg-slate-50 text-sm font-medium">
-          <div 
-            className={`flex-1 py-3 text-center border-b-2 transition-all ${
-              currentMode === 'edit' ? 'border-blue-600 text-blue-600 bg-white font-bold' : 'border-transparent text-slate-400'
-            }`}
-          >
-            1. 設問設計
-          </div>
-          <div 
-            className={`flex-1 py-3 text-center border-b-2 transition-all ${
-              currentMode === 'preview' ? 'border-blue-600 text-blue-600 bg-white font-bold' : 'border-transparent text-slate-400'
-            }`}
-          >
-            2. プレビュー
-          </div>
-          <div 
-            className={`flex-1 py-3 text-center border-b-2 transition-all ${
-              currentMode === 'publish' ? 'border-blue-600 text-blue-600 bg-white font-bold' : 'border-transparent text-slate-400'
-            }`}
-          >
-            3. 公開設定
-          </div>
-        </div>
+        {/* 🆕 既存の作成済み Stepper.tsx をここで使用 */}
+        {/* ※お使いのStepperのプロップス名（currentStepやactiveStepなど）に合わせて適宜微調整してください */}
+        <Stepper currentStep={getStepNumber()} />
 
         <div className="grid grid-cols-12 min-h-[600px]">
           
