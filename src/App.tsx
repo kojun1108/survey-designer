@@ -7,20 +7,9 @@ import { QuestionCard, QuestionEditor } from './components/QuestionItems';
 import type { Question } from './components/QuestionItems';
 
 export default function App() {
-  // すべての設問タイプを1回ずつ押して追加した状態の初期データ
-  const [questions, setQuestions] = useState<Question[]>([
-    { id: 'initial-single', number: 'Q1', title: 'あなたの所属部署を教えてください。', type: '単一選択', required: true },
-    { id: 'initial-multiple', number: 'Q2', title: '現在の働き方について（あてはまるものをすべて選択）', type: '複数選択', required: true },
-    { id: 'initial-dropdown', number: 'Q3', title: 'お住まいの都道府県を選択してください。', type: 'プルダウン', required: true },
-    { id: 'initial-text', number: 'Q4', title: '弊社のサービスに対するご意見・ご要望をご記入ください。', type: '自由記述', required: false },
-    { id: 'initial-number', number: 'Q5', title: 'あなたの年齢をご入力ください。', type: '数値入力', required: false },
-    { id: 'initial-date', number: 'Q6', title: 'ご希望の参加日程を選択してください。', type: '日付', required: false },
-    { id: 'initial-rating', number: 'Q7', title: '今回のイベントの満足度を教えてください。', type: '評価（5段階）', required: true },
-    { id: 'initial-divider', number: 'Q8', title: 'ここからは、あなたご自身に関する質問となります。', type: '説明・区切り', required: false },
-  ]);
-
-  // 最初からQ2を展開状態にしておく
-  const [openQuestionId, setOpenQuestionId] = useState<string | null>('initial-multiple');
+  // 1. 初期状態を空の配列にする
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [openQuestionId, setOpenQuestionId] = useState<string | null>(null);
 
   // サイドバーがクリックされたときに、新しい設問をリストの末尾に追加する関数
   const handleAddQuestion = (typeId: QuestionTypeId) => {
@@ -95,9 +84,11 @@ export default function App() {
               );
             })}
 
+            {/* 設問がゼロの時の案内表示（点線のボックス） */}
             {questions.length === 0 && (
-              <div className="text-center py-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg">
-                左側の「設問タイプ」をクリックして、設問を追加してください。
+              <div className="text-center py-24 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                <p className="text-sm font-medium text-slate-500 mb-1">設問が登録されていません</p>
+                <p className="text-xs text-slate-400">左側の「設問タイプ」をクリックして、新しい設問を追加してください。</p>
               </div>
             )}
           </main>
