@@ -14,17 +14,16 @@ export default function App() {
   const [openQuestionId, setOpenQuestionId] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  // 🆕 現在の画面モードを管理するステート ('edit' | 'preview' | 'publish')
+  // 現在の画面モードを管理
   const [currentMode, setCurrentMode] = useState<AppMode>('edit');
 
   const [surveyTitle, setSurveyTitle] = useState('未設定のアンケートタイトル');
   const [surveyDescription, setSurveyDescription] = useState('このアンケートの概要や回答者への案内文をここに入力してください。');
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
 
-  // 🆕 プレビュー画面での回答データを保持するステート（テスト用）
+  // プレビュー画面での回答データを保持
   const [answers, setAnswers] = useState<Record<string, any>>({});
 
-  // 新しい設問を追加
   const handleAddQuestion = (typeId: QuestionTypeId) => {
     const labels: Record<QuestionTypeId, string> = {
       single: '単一選択',
@@ -109,47 +108,59 @@ export default function App() {
     setDraggedIndex(null);
   };
 
-  // プレビュー画面での回答入力ハンドラー
   const handleAnswerChange = (qId: string, value: any) => {
     setAnswers({ ...answers, [qId]: value });
   };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-6 text-slate-800">
-      <div className="max-w-6xl mx-auto mb-4 flex items-center gap-3">
-        <span className="bg-blue-600 text-white font-bold w-7 h-7 flex items-center justify-center rounded text-sm shadow-sm">4</span>
-        <h1 className="text-xl font-bold text-slate-900">アンケート詳細設計画面</h1>
+      <div className="max-w-6xl mx-auto mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="bg-blue-600 text-white font-bold w-7 h-7 flex items-center justify-center rounded text-sm shadow-sm">4</span>
+          <h1 className="text-xl font-bold text-slate-900">アンケート詳細設計画面</h1>
+        </div>
+        
+        {/* 🆕 右上にプレビューボタンを配置 */}
+        {currentMode === 'edit' && (
+          <button 
+            onClick={() => {
+              setOpenQuestionId(null);
+              setCurrentMode('preview');
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg shadow-sm transition-colors text-sm"
+          >
+            <Eye size={16} />
+            <span>プレビュー</span>
+          </button>
+        )}
       </div>
 
       <div className="max-w-6xl mx-auto bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <Header />
         
-        {/* 🆕 動的なステップバー (位置クリックでも移動可能) */}
+        {/* 🆕 ステップバー (タブではなく、単なる進捗表示として button から div に変更) */}
         <div className="flex border-b border-slate-200 bg-slate-50 text-sm font-medium">
-          <button 
-            onClick={() => setCurrentMode('edit')}
+          <div 
             className={`flex-1 py-3 text-center border-b-2 transition-all ${
-              currentMode === 'edit' ? 'border-blue-600 text-blue-600 bg-white font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'
+              currentMode === 'edit' ? 'border-blue-600 text-blue-600 bg-white font-bold' : 'border-transparent text-slate-400'
             }`}
           >
             1. 設問設計
-          </button>
-          <button 
-            onClick={() => setCurrentMode('preview')}
+          </div>
+          <div 
             className={`flex-1 py-3 text-center border-b-2 transition-all ${
-              currentMode === 'preview' ? 'border-blue-600 text-blue-600 bg-white font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'
+              currentMode === 'preview' ? 'border-blue-600 text-blue-600 bg-white font-bold' : 'border-transparent text-slate-400'
             }`}
           >
             2. プレビュー
-          </button>
-          <button 
-            onClick={() => setCurrentMode('publish')}
+          </div>
+          <div 
             className={`flex-1 py-3 text-center border-b-2 transition-all ${
-              currentMode === 'publish' ? 'border-blue-600 text-blue-600 bg-white font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'
+              currentMode === 'publish' ? 'border-blue-600 text-blue-600 bg-white font-bold' : 'border-transparent text-slate-400'
             }`}
           >
             3. 公開設定
-          </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-12 min-h-[600px]">
@@ -219,7 +230,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 🆕 作成完了ボタン（押すとプレビューへ移動） */}
+                {/* 作成完了ボタン（押すとプレビューへ移動） */}
                 {questions.length > 0 && (
                   <div className="flex justify-end pt-4 border-t border-slate-100">
                     <button
@@ -238,24 +249,20 @@ export default function App() {
             </>
           )}
 
-          {/* 🆕 2. 回答者プレビューモードの表示レイアウト */}
+          {/* 2. 回答者プレビューモードの表示レイアウト */}
           {currentMode === 'preview' && (
             <main className="col-span-12 p-8 bg-slate-50/50 min-h-[600px] flex flex-col items-center">
-              {/* プレビュー通知バナー */}
               <div className="w-full max-w-3xl bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-xs font-semibold flex items-center gap-2 mb-6 shadow-sm">
                 <Eye size={16} className="text-amber-600" />
                 <span>現在は「回答者プレビュー画面」です。実際の回答者がどのように画面を操作し、入力できるかテスト可能です。</span>
               </div>
 
-              {/* 模擬スマホ/PCデザインのアンケート用紙 */}
               <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden p-8 space-y-8">
-                {/* アンケートの顔 */}
                 <div className="border-b border-slate-200 pb-5 space-y-2">
                   <h2 className="text-2xl font-bold text-slate-900">{surveyTitle}</h2>
                   <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{surveyDescription}</p>
                 </div>
 
-                {/* 動的な設問フォーム表示 */}
                 <div className="space-y-6">
                   {questions.map((q) => (
                     <div key={q.id} className="p-5 border border-slate-100 rounded-xl bg-white shadow-sm space-y-3">
@@ -265,7 +272,6 @@ export default function App() {
                         {q.required && <span className="text-[10px] bg-red-100 text-red-600 font-bold px-1.5 py-0.5 rounded">必須</span>}
                       </div>
 
-                      {/* 回答コンポーネントのテスト用フォーム展開 */}
                       <div className="pt-1 text-sm text-slate-700">
                         {q.type === '単一選択' && q.options && (
                           <div className="space-y-2">
@@ -335,7 +341,6 @@ export default function App() {
                   )}
                 </div>
 
-                {/* プレビュー内送信ボタン */}
                 <div className="pt-6 border-t border-slate-100 flex justify-center">
                   <button onClick={() => alert('これはプレビュー画面のテスト送信です。実際の回答データは送信されません。')} className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md shadow transition-colors text-sm">
                     回答を送信する（テスト）
@@ -343,7 +348,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 画面下のナビゲーションコントローラー */}
               <div className="w-full max-w-3xl mt-8 flex justify-between items-center bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
                 <button onClick={() => setCurrentMode('edit')} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-100 px-4 py-2 rounded-md transition-colors">
                   <ArrowLeft size={14} />
@@ -357,7 +361,7 @@ export default function App() {
             </main>
           )}
 
-          {/* 🆕 3. 公開設定モードの表示レイアウト */}
+          {/* 3. 公開設定モードの表示レイアウト */}
           {currentMode === 'publish' && (
             <main className="col-span-12 p-12 bg-white min-h-[600px] flex flex-col items-center justify-center text-center space-y-4">
               <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-500 mx-auto shadow-sm">
