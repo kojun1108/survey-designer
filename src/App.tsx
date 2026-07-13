@@ -239,8 +239,7 @@ export default function App() {
               surveyTitle={surveyTitle}
               surveyDescription={surveyDescription}
               questions={questions}
-              onBack={() => setCurrentMode('edit')}
-              onNext={handleProceedToPublish}
+              // 【修正】エラーの原因となっていた onBack と onNext を削除しました
             />
           )}
 
