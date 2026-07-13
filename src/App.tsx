@@ -5,7 +5,7 @@ import SurveyPreview from './components/SurveyPreview';
 import SurveyPublish from './components/SurveyPublish';
 import type { QuestionTypeId } from './components/Sidebar';
 import type { Question } from './components/QuestionItems';
-import { Eye, Save, ArrowLeft, Globe } from 'lucide-react'; // アイコンを追加
+import { Eye, Save, ArrowLeft, Globe } from 'lucide-react';
 
 type AppMode = 'edit' | 'preview' | 'publish';
 
@@ -19,9 +19,59 @@ export default function App() {
   const [surveyDescription, setSurveyDescription] = useState('このアンケートの概要や回答者への案内文をここに入力してください。');
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
 
-  // 一時保存ボタンの処理
+  // 【追加】バリデーションロジック（必須項目チェック）
+  const validateSurvey = (): { isValid: boolean; message: string } => {
+    // 1. タイトルチェック
+    if (!surveyTitle.trim() || surveyTitle === '未設定のアンケートタイトル') {
+      return { isValid: false, message: 'アンケートタイトルを設定してください。' };
+    }
+
+    // 2. 設問数チェック
+    if (questions.length === 0) {
+      return { isValid: false, message: '設問を少なくとも1つ以上作成してください。' };
+    }
+
+    // 3. 各設問の個別チェック
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      const qNum = i + 1;
+
+      // 設問タイトルの空白チェック
+      if (!q.title.trim()) {
+        return { isValid: false, message: `Q${qNum}の設問タイトルが入力されていません。` };
+      }
+
+      // 選択肢が必要なタイプ（単一、複数、プルダウン）のチェック
+      const needsOptions = ['単一選択', '複数選択', 'プルダウン'].includes(q.type);
+      if (needsOptions) {
+        if (!q.options || q.options.length === 0) {
+          return { isValid: false, message: `Q${qNum}には選択肢が少なくとも1つ以上必要です。` };
+        }
+        
+        // 空白の選択肢がないかチェック
+        const hasEmptyOption = q.options.some(opt => !opt.trim());
+        if (hasEmptyOption) {
+          return { isValid: false, message: `Q${qNum}に空欄の選択肢があります。入力するか削除してください。` };
+        }
+      }
+    }
+
+    return { isValid: true, message: '' };
+  };
+
+  // 一時保存ボタンの処理（バリデーションを通さずいつでも保存可能）
   const handleSave = () => {
-    alert('アンケートの内容を一時保存しました。');
+    alert('アンケートの内容を一時保存しました。（未入力項目があっても保存されます）');
+  };
+
+  // プレビュー画面・編集画面からの「次へ」進む際のアクション
+  const handleProceedToPublish = () => {
+    const result = validateSurvey();
+    if (!result.isValid) {
+      alert(`【公開不可】\n${result.message}`);
+      return;
+    }
+    setCurrentMode('publish');
   };
 
   // Stepper用のステップ番号取得
@@ -54,7 +104,7 @@ export default function App() {
     const newQuestion: Question = {
       id: newId,
       number: `Q${nextNumber}`,
-      title: typeLabel === '説明・区切り' ? 'ここへ案内文や説明テキストを入力してください。' : `新しい${typeLabel}の設問タイトルを入力してください。`,
+      title: typeLabel === '説明・区切り' ? '' : '', // 初期値は空にしてユーザーに入力を促す
       type: typeLabel,
       required: false,
       options: defaultOptions
@@ -106,21 +156,21 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-6 text-slate-800">
-      {/* 画面トップエリア：画面名と操作ボタンを横並びに配置 */}
+      {/* 画面トップエリア：画面名と操作ボタン */}
       <div className="max-w-6xl mx-auto mb-5 flex items-center justify-between border-b border-slate-200 pb-3">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">アンケート詳細設計</h1>
         </div>
         
         <div className="flex items-center gap-2">
-          {/* 【追加】プレビューモードの時だけ、一時保存の左に「設計画面に戻る」ボタンを表示 */}
-          {currentMode === 'preview' && (
+          {/* プレビュー画面 or 公開画面なら「戻る」を表示 */}
+          {currentMode !== 'edit' && (
             <button 
-              onClick={() => setCurrentMode('edit')}
+              onClick={() => setCurrentMode(currentMode === 'publish' ? 'preview' : 'edit')}
               className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg shadow-sm transition-colors text-sm"
             >
               <ArrowLeft size={16} className="text-slate-500" />
-              <span>設計画面に戻る</span>
+              <span>{currentMode === 'publish' ? 'プレビュー画面に戻る' : '設計画面に戻る'}</span>
             </button>
           )}
 
@@ -132,7 +182,7 @@ export default function App() {
             <span>一時保存</span>
           </button>
 
-          {/* モードによって右端のボタン（メインアクション）を切り替え */}
+          {/* 右端メインボタンの切り替え */}
           {currentMode === 'edit' ? (
             <button 
               onClick={() => {
@@ -146,7 +196,7 @@ export default function App() {
             </button>
           ) : currentMode === 'preview' ? (
             <button 
-              onClick={() => setCurrentMode('publish')}
+              onClick={handleProceedToPublish} // バリデーション付き関数に変更
               className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm"
             >
               <Globe size={16} />
@@ -180,10 +230,7 @@ export default function App() {
               setSurveyTitle={setSurveyTitle}
               setSurveyDescription={setSurveyDescription}
               setIsEditingMetadata={setIsEditingMetadata}
-              onComplete={() => {
-                setOpenQuestionId(null);
-                setCurrentMode('preview');
-              }}
+              onComplete={handleProceedToPublish} // こちらもバリデーション付きに
             />
           )}
 
@@ -193,7 +240,7 @@ export default function App() {
               surveyDescription={surveyDescription}
               questions={questions}
               onBack={() => setCurrentMode('edit')}
-              onNext={() => setCurrentMode('publish')}
+              onNext={handleProceedToPublish}
             />
           )}
 
