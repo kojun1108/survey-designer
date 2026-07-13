@@ -19,7 +19,7 @@ export default function App() {
   const [surveyDescription, setSurveyDescription] = useState('このアンケートの概要や回答者への案内文をここに入力してください。');
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
 
-  // 【追加】バリデーションロジック（必須項目チェック）
+  // バリデーションロジック（必須項目チェック）
   const validateSurvey = (): { isValid: boolean; message: string } => {
     // 1. タイトルチェック
     if (!surveyTitle.trim() || surveyTitle === '未設定のアンケートタイトル') {
@@ -59,19 +59,9 @@ export default function App() {
     return { isValid: true, message: '' };
   };
 
-  // 一時保存ボタンの処理（バリデーションを通さずいつでも保存可能）
+  // 一時保存ボタンの処理（いつでも保存可能）
   const handleSave = () => {
-    alert('アンケートの内容を一時保存しました。（未入力項目があっても保存されます）');
-  };
-
-  // プレビュー画面・編集画面からの「次へ」進む際のアクション
-  const handleProceedToPublish = () => {
-    const result = validateSurvey();
-    if (!result.isValid) {
-      alert(`【公開不可】\n${result.message}`);
-      return;
-    }
-    setCurrentMode('publish');
+    alert('アンケートの内容を一時保存しました。');
   };
 
   // Stepper用のステップ番号取得
@@ -104,7 +94,7 @@ export default function App() {
     const newQuestion: Question = {
       id: newId,
       number: `Q${nextNumber}`,
-      title: typeLabel === '説明・区切り' ? '' : '', // 初期値は空にしてユーザーに入力を促す
+      title: '', // 初期値は空欄
       type: typeLabel,
       required: false,
       options: defaultOptions
@@ -156,14 +146,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-6 text-slate-800">
-      {/* 画面トップエリア：画面名と操作ボタン */}
+      {/* 画面トップエリア */}
       <div className="max-w-6xl mx-auto mb-5 flex items-center justify-between border-b border-slate-200 pb-3">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">アンケート詳細設計</h1>
         </div>
         
         <div className="flex items-center gap-2">
-          {/* プレビュー画面 or 公開画面なら「戻る」を表示 */}
           {currentMode !== 'edit' && (
             <button 
               onClick={() => setCurrentMode(currentMode === 'publish' ? 'preview' : 'edit')}
@@ -182,7 +171,6 @@ export default function App() {
             <span>一時保存</span>
           </button>
 
-          {/* 右端メインボタンの切り替え */}
           {currentMode === 'edit' ? (
             <button 
               onClick={() => {
@@ -196,7 +184,7 @@ export default function App() {
             </button>
           ) : currentMode === 'preview' ? (
             <button 
-              onClick={handleProceedToPublish} // バリデーション付き関数に変更
+              onClick={() => setCurrentMode('publish')} // 【修正】チェックせずに公開設定画面へ進めるように
               className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm"
             >
               <Globe size={16} />
@@ -230,7 +218,7 @@ export default function App() {
               setSurveyTitle={setSurveyTitle}
               setSurveyDescription={setSurveyDescription}
               setIsEditingMetadata={setIsEditingMetadata}
-              onComplete={handleProceedToPublish} // こちらもバリデーション付きに
+              onComplete={() => setCurrentMode('preview')}
             />
           )}
 
@@ -239,13 +227,13 @@ export default function App() {
               surveyTitle={surveyTitle}
               surveyDescription={surveyDescription}
               questions={questions}
-              // 【修正】エラーの原因となっていた onBack と onNext を削除しました
             />
           )}
 
           {currentMode === 'publish' && (
             <SurveyPublish
               onBack={() => setCurrentMode('preview')}
+              validateSurvey={validateSurvey} // 【追加】公開設定コンポーネントにバリデーション関数を渡す
             />
           )}
         </div>
