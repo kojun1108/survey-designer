@@ -1,12 +1,11 @@
 import { useState } from 'react';
-// import Header from './components/Header'; // 不要になったため非表示、または削除
 import Stepper from './components/Stepper';
 import SurveyEditor from './components/SurveyEditor';
 import SurveyPreview from './components/SurveyPreview';
 import SurveyPublish from './components/SurveyPublish';
 import type { QuestionTypeId } from './components/Sidebar';
 import type { Question } from './components/QuestionItems';
-import { Eye, Save } from 'lucide-react';
+import { Eye, Save, ArrowLeft, Globe } from 'lucide-react'; // アイコンを追加
 
 type AppMode = 'edit' | 'preview' | 'publish';
 
@@ -114,6 +113,17 @@ export default function App() {
         </div>
         
         <div className="flex items-center gap-2">
+          {/* 【追加】プレビューモードの時だけ、一時保存の左に「設計画面に戻る」ボタンを表示 */}
+          {currentMode === 'preview' && (
+            <button 
+              onClick={() => setCurrentMode('edit')}
+              className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg shadow-sm transition-colors text-sm"
+            >
+              <ArrowLeft size={16} className="text-slate-500" />
+              <span>設計画面に戻る</span>
+            </button>
+          )}
+
           <button 
             onClick={handleSave}
             className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg shadow-sm transition-colors text-sm"
@@ -122,26 +132,35 @@ export default function App() {
             <span>一時保存</span>
           </button>
 
-          <button 
-            onClick={() => {
-              setOpenQuestionId(null);
-              setCurrentMode('preview');
-            }}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm"
-          >
-            <Eye size={16} />
-            <span>プレビュー</span>
-          </button>
+          {/* モードによって右端のボタン（メインアクション）を切り替え */}
+          {currentMode === 'edit' ? (
+            <button 
+              onClick={() => {
+                setOpenQuestionId(null);
+                setCurrentMode('preview');
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm"
+            >
+              <Eye size={16} />
+              <span>プレビュー</span>
+            </button>
+          ) : currentMode === 'preview' ? (
+            <button 
+              onClick={() => setCurrentMode('publish')}
+              className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm"
+            >
+              <Globe size={16} />
+              <span>公開設定</span>
+            </button>
+          ) : null}
         </div>
       </div>
 
       {/* メインカード枠 */}
       <div className="max-w-6xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* <Header />  ← ここを非表示にしました */}
         <Stepper currentStep={getStepNumber()} />
 
         <div className="grid grid-cols-12 min-h-[600px]">
-          {/* 現在のモードに合わせてコンポーネントを切り替え */}
           {currentMode === 'edit' && (
             <SurveyEditor
               questions={questions}
