@@ -11,7 +11,9 @@ export default function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [openQuestionId, setOpenQuestionId] = useState<string | null>(null);
 
-  // アンケート全体のタイトルと概要のステート
+  // ドラッグ中の設問のインデックスを保持するステート
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
   const [surveyTitle, setSurveyTitle] = useState('未設定のアンケートタイトル');
   const [surveyDescription, setSurveyDescription] = useState('このアンケートの概要や回答者への案内文をここに入力してください。');
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
@@ -52,14 +54,32 @@ export default function App() {
     setOpenQuestionId(newId);
   };
 
+  // 設問を複製する関数（その設問のすぐ下にコピーを挿入する）
+  const handleDuplicateQuestion = (id: string) => {
+    const targetIndex = questions.findIndex(q => q.id === id);
+    if (targetIndex === -1) return;
+
+    const targetQuestion = questions[targetIndex];
+    const newId = `q-dup-${Date.now()}`;
+    
+    const duplicatedQuestion: Question = {
+      ...targetQuestion,
+      id: newId,
+      options: targetQuestion.options ? [...targetQuestion.options] : undefined,
+    };
+
+    const updatedList = [...questions];
+    updatedList.splice(targetIndex + 1, 0, duplicatedQuestion);
+    
+    // 一番下にあるヘルパー関数を使って番号を振り直して保存
+    setQuestions(renumberQuestions(updatedList));
+    setOpenQuestionId(newId);
+  };
+
   // 設問を削除する関数
   const handleDeleteQuestion = (id: string) => {
     const filtered = questions.filter(q => q.id !== id);
-    const renumbered = filtered.map((q, index) => ({
-      ...q,
-      number: `Q${index + 1}`
-    }));
-    setQuestions(renumbered);
+    setQuestions(renumberQuestions(filtered));
     if (openQuestionId === id) {
       setOpenQuestionId(null);
     }
@@ -70,15 +90,33 @@ export default function App() {
     setQuestions(questions.map(q => q.id === updatedQuestion.id ? updatedQuestion : q));
   };
 
+  // ドラッグ＆ドロップ並び替えのロジック群
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnter = (targetIndex: number) => {
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    const updatedList = [...questions];
+    const [draggedItem] = updatedList.splice(draggedIndex, 1);
+    updatedList.splice(targetIndex, 0, draggedItem);
+
+    setDraggedIndex(targetIndex);
+    setQuestions(renumberQuestions(updatedList));
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] p-6 text-slate-800">
-      {/* 画面タイトル */}
       <div className="max-w-6xl mx-auto mb-4 flex items-center gap-3">
         <span className="bg-blue-600 text-white font-bold w-7 h-7 flex items-center justify-center rounded text-sm shadow-sm">4</span>
         <h1 className="text-xl font-bold text-slate-900">アンケート詳細設計画面</h1>
       </div>
 
-      {/* メインコンテナ */}
       <div className="max-w-6xl mx-auto bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <Header />
         <Stepper />
@@ -86,17 +124,15 @@ export default function App() {
         <div className="grid grid-cols-12 min-h-[600px]">
           <Sidebar onAddQuestion={handleAddQuestion} />
 
-          {/* 右メイン: アンケート設定エリア */}
           <main className="col-span-9 p-6 bg-white space-y-6">
             
-            {/* 🆕 アンケートタイトル・概要 設定スペース */}
+            {/* アンケートタイトル・概要 設定スペース */}
             <div className={`border rounded-xl transition-all p-5 ${
               isEditingMetadata 
                 ? 'border-blue-500 bg-blue-50/10 shadow-md' 
                 : 'border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:bg-slate-50'
             }`}>
               {isEditingMetadata ? (
-                // 編集モード時のフォーム表示
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span className="text-xs font-bold text-blue-600">アンケート基本情報の編集</span>
@@ -115,7 +151,6 @@ export default function App() {
                       type="text"
                       value={surveyTitle}
                       onChange={(e) => setSurveyTitle(e.target.value)}
-                      placeholder="アンケートのタイトルを入力"
                       className="w-full text-base font-bold border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
                     />
                   </div>
@@ -127,17 +162,12 @@ export default function App() {
                       rows={3}
                       value={surveyDescription}
                       onChange={(e) => setSurveyDescription(e.target.value)}
-                      placeholder="回答者への挨拶や目的、所要時間などを入力"
                       className="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
                     />
                   </div>
                 </div>
               ) : (
-                // プレビューモード時の表示（クリックで編集へ）
-                <div 
-                  onClick={() => setIsEditingMetadata(true)} 
-                  className="cursor-pointer group/meta"
-                >
+                <div onClick={() => setIsEditingMetadata(true)} className="cursor-pointer group/meta">
                   <div className="flex items-start justify-between">
                     <div className="space-y-2 flex-1">
                       <h2 className="text-lg font-bold text-slate-900 group-hover/meta:text-blue-600 transition-colors">
@@ -158,34 +188,45 @@ export default function App() {
             {/* 設問一覧の見出し */}
             <div>
               <div className="text-sm font-bold text-slate-700 mb-2">
-                設問一覧 <span className="text-xs font-normal text-slate-400">（ドラッグ＆ドロップで順番変更）</span>
+                設問一覧 <span className="text-xs font-normal text-slate-400">（左端のハンドルをドラッグして順番変更）</span>
               </div>
 
               <div className="space-y-4">
-                {questions.map((q) => {
-                  if (openQuestionId === q.id) {
-                    return (
-                      <QuestionEditor 
-                        key={q.id} 
-                        question={q} 
-                        onClose={() => setOpenQuestionId(null)} 
-                        onDelete={() => handleDeleteQuestion(q.id)}
-                        onUpdate={handleUpdateQuestion}
-                      />
-                    );
-                  }
-
+                {questions.map((q, index) => {
+                  const isDragging = index === draggedIndex;
+                  
                   return (
-                    <QuestionCard 
-                      key={q.id} 
-                      question={q} 
-                      onOpen={() => setOpenQuestionId(q.id)} 
-                    />
+                    <div
+                      key={q.id}
+                      draggable
+                      onDragStart={() => handleDragStart(index)}
+                      onDragEnter={() => handleDragEnter(index)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => e.preventDefault()}
+                      className={`transition-all duration-150 ${
+                        isDragging ? 'opacity-40 scale-[0.98] border border-dashed border-blue-400 rounded-lg' : 'opacity-100'
+                      }`}
+                    >
+                      {openQuestionId === q.id ? (
+                        <QuestionEditor 
+                          question={q} 
+                          onClose={() => setOpenQuestionId(null)} 
+                          onDelete={() => handleDeleteQuestion(q.id)}
+                          onDuplicate={() => handleDuplicateQuestion(q.id)}
+                          onUpdate={handleUpdateQuestion}
+                        />
+                      ) : (
+                        <QuestionCard 
+                          question={q} 
+                          onOpen={() => setOpenQuestionId(q.id)} 
+                        />
+                      )}
+                    </div>
                   );
                 })}
 
                 {questions.length === 0 && (
-                  <div className="text-center py-24 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50等">
+                  <div className="text-center py-24 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
                     <p className="text-sm font-medium text-slate-500 mb-1">設問が登録されていません</p>
                     <p className="text-xs text-slate-400">左側の「設問タイプ」をクリックして、新しい設問を追加してください。</p>
                   </div>
@@ -198,4 +239,12 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+// 🆕 エラー回避のため、コンポーネントの外（最下部）に独立して配置
+function renumberQuestions(list: Question[]) {
+  return list.map((q, index) => ({
+    ...q,
+    number: `Q${index + 1}`
+  }));
 }
