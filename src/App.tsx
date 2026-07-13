@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import Header from './components/Header';
+// import Header from './components/Header'; // 不要になったため非表示、または削除
 import Stepper from './components/Stepper';
 import SurveyEditor from './components/SurveyEditor';
 import SurveyPreview from './components/SurveyPreview';
 import SurveyPublish from './components/SurveyPublish';
 import type { QuestionTypeId } from './components/Sidebar';
 import type { Question } from './components/QuestionItems';
-import { Eye, Save } from 'lucide-react'; // Saveアイコンを追加
+import { Eye, Save } from 'lucide-react';
 
 type AppMode = 'edit' | 'preview' | 'publish';
 
@@ -22,7 +22,6 @@ export default function App() {
 
   // 一時保存ボタンの処理
   const handleSave = () => {
-    // ここに保存ロジック（API呼び出しやlocalStorageへの保存など）を将来的に記述できます
     alert('アンケートの内容を一時保存しました。');
   };
 
@@ -108,31 +107,37 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-6 text-slate-800">
-      {/* 画面トップヘッダーエリア（ボタンのみ右上に配置） */}
-      <div className="max-w-6xl mx-auto mb-4 flex justify-end items-center gap-2">
-        <button 
-          onClick={handleSave}
-          className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg shadow-sm transition-colors text-sm"
-        >
-          <Save size={16} className="text-slate-500" />
-          <span>一時保存</span>
-        </button>
+      {/* 画面トップエリア：画面名と操作ボタンを横並びに配置 */}
+      <div className="max-w-6xl mx-auto mb-5 flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">アンケート詳細設計</h1>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={handleSave}
+            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg shadow-sm transition-colors text-sm"
+          >
+            <Save size={16} className="text-slate-500" />
+            <span>一時保存</span>
+          </button>
 
-        <button 
-          onClick={() => {
-            setOpenQuestionId(null);
-            setCurrentMode('preview');
-          }}
-          className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm"
-        >
-          <Eye size={16} />
-          <span>プレビュー</span>
-        </button>
+          <button 
+            onClick={() => {
+              setOpenQuestionId(null);
+              setCurrentMode('preview');
+            }}
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm"
+          >
+            <Eye size={16} />
+            <span>プレビュー</span>
+          </button>
+        </div>
       </div>
 
       {/* メインカード枠 */}
-      <div className="max-w-6xl mx-auto bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-        <Header />
+      <div className="max-w-6xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* <Header />  ← ここを非表示にしました */}
         <Stepper currentStep={getStepNumber()} />
 
         <div className="grid grid-cols-12 min-h-[600px]">
